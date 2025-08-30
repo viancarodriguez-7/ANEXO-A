@@ -12,10 +12,6 @@ def calcular_mse_psnr_ssim(original, reconstruida):
     ssim_val = ssim(original, reconstruida, data_range=255)
     return mse_val, psnr_val, ssim_val
 
-def calcular_histograma(imagen):
-    hist, bins = np.histogram(imagen.flatten(), bins=256, range=[0, 256])
-    return hist, bins[:-1]
-
 # === DCT ===
 def compress_dct(dct_matrix, percentage):
     height, width = dct_matrix.shape
@@ -79,7 +75,6 @@ ssim_dct_12_5 = ssim_dct_vals[2]
 mse_dwt_vals = []
 psnr_dwt_vals = []
 ssim_dwt_vals = []
-original_norm = imagen.astype(np.float32) / 255.0
 rec_dwt_imgs = []
 
 for nivel in range(1, 5):
@@ -118,19 +113,6 @@ for ax, img, title, mse_val, psnr_val, ssim_val in zip(
 plt.tight_layout()
 plt.show()
 
-# === SEGUNDA HOJA ===
-fig2, axes2 = plt.subplots(1, 3, figsize=(15, 5))
-
-for ax, img, title in zip(axes2, [imagen, image_dct_50, image_dct_12_5], ["Original", "Compresión al 50% - DCT", "Compresión al 12.5% - DCT"]):
-    hist, bins = calcular_histograma(img)
-    ax.bar(bins, hist, width=1, color='black')
-    ax.set_title(f"Histograma - {title}")
-    ax.set_xlabel("Intensidad")
-    ax.set_ylabel("Frecuencia")
-
-plt.tight_layout()
-plt.show()
-
 # === TERCERA HOJA ===
 fig3, axes3 = plt.subplots(1, 3, figsize=(15, 6))
 
@@ -149,19 +131,6 @@ for ax, img, title, mse_val, psnr_val, ssim_val in zip(
 plt.tight_layout()
 plt.show()
 
-# === CUARTA HOJA ===
-fig4, axes4 = plt.subplots(1, 3, figsize=(15, 5))
-
-for ax, img, title in zip(axes4, [imagen, rec_dwt_1, rec_dwt_3], ["Original", "Compresión al 50% (j=1) - DWT de Haar", "Compresión al 12.5% (j=3) - DWT de Haar"]):
-    hist, bins = calcular_histograma(img)
-    ax.bar(bins, hist, width=1, color='black')
-    ax.set_title(f"Histograma - {title}")
-    ax.set_xlabel("Intensidad")
-    ax.set_ylabel("Frecuencia")
-
-plt.tight_layout()
-plt.show()
-
 # === QUINTA HOJA ===
 def annotate(ax, x, y, fmt="{:.2f}"):
     for i, (xi, yi) in enumerate(zip(x, y)):
@@ -174,8 +143,8 @@ x = [50, 25, 12.5, 6.25]
 # MSE
 axs5[0].plot(x, mse_dct_vals, marker='o', label='DCT + Cuant.', color='blue')
 axs5[0].plot(x, mse_dwt_vals, marker='s', label='DWT Haar', color='red')
-axs5[0].set_title('Compresi\u00f3n vs MSE')
-axs5[0].set_xlabel('Nivel de compresi\u00f3n (%)')
+axs5[0].set_title('Compresión vs MSE')
+axs5[0].set_xlabel('Nivel de compresión (%)')
 axs5[0].set_ylabel('MSE')
 axs5[0].invert_xaxis()
 annotate(axs5[0], x, mse_dct_vals)
@@ -185,8 +154,8 @@ axs5[0].legend()
 # PSNR
 axs5[1].plot(x, psnr_dct_vals, marker='o', label='DCT + Cuant.', color='blue')
 axs5[1].plot(x, psnr_dwt_vals, marker='s', label='DWT Haar', color='red')
-axs5[1].set_title('Compresi\u00f3n vs PSNR (dB)')
-axs5[1].set_xlabel('Nivel de compresi\u00f3n (%)')
+axs5[1].set_title('Compresión vs PSNR (dB)')
+axs5[1].set_xlabel('Nivel de compresión (%)')
 axs5[1].set_ylabel('PSNR (dB)')
 axs5[1].invert_xaxis()
 annotate(axs5[1], x, psnr_dct_vals)
@@ -196,8 +165,8 @@ axs5[1].legend()
 # SSIM
 axs5[2].plot(x, ssim_dct_vals, marker='o', label='DCT + Cuant.', color='blue')
 axs5[2].plot(x, ssim_dwt_vals, marker='s', label='DWT Haar', color='red')
-axs5[2].set_title('Compresi\u00f3n vs SSIM')
-axs5[2].set_xlabel('Nivel de compresi\u00f3n (%)')
+axs5[2].set_title('Compresión vs SSIM')
+axs5[2].set_xlabel('Nivel de compresión (%)')
 axs5[2].set_ylabel('SSIM')
 axs5[2].invert_xaxis()
 annotate(axs5[2], x, ssim_dct_vals, fmt="{:.4f}")
@@ -206,3 +175,17 @@ axs5[2].legend()
 
 plt.tight_layout()
 plt.show()
+
+# === GUARDAR IMÁGENES DCT EN JPG ===
+output_dir = "."  # Carpeta actual (la del script)
+
+cv2.imwrite(os.path.join(output_dir, "dct_50.jpg"), image_dct_50)
+cv2.imwrite(os.path.join(output_dir, "dct_25.jpg"), dct_imgs[1])
+cv2.imwrite(os.path.join(output_dir, "dct_12_5.jpg"), image_dct_12_5)
+cv2.imwrite(os.path.join(output_dir, "dct_6_25.jpg"), dct_imgs[3])
+
+# === GUARDAR IMÁGENES DWT EN JPEG2000 ===
+cv2.imwrite(os.path.join(output_dir, "dwt_nivel1.jp2"), rec_dwt_imgs[0])
+cv2.imwrite(os.path.join(output_dir, "dwt_nivel2.jp2"), rec_dwt_imgs[1])
+cv2.imwrite(os.path.join(output_dir, "dwt_nivel3.jp2"), rec_dwt_imgs[2])
+cv2.imwrite(os.path.join(output_dir, "dwt_nivel4.jp2"), rec_dwt_imgs[3])
