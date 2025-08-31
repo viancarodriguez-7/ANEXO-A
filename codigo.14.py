@@ -20,15 +20,15 @@ def calcular_histograma(img):
     hist, bins = np.histogram(img.flatten(), bins=256, range=[0, 256])
     return hist, bins[:-1]
 
-def compress_dct(dct, percent):
-    (h, w) = dct.shape
+def compress_tdc(tdc, percent):
+    (h, w) = tdc.shape
     keep_h = int(h * percent / 100)
     keep_w = int(w * percent / 100)
-    mask = np.zeros_like(dct)
+    mask = np.zeros_like(tdc)
     mask[:keep_h, :keep_w] = 1
-    return dct * mask
+    return tdc * mask
 
-def aplicar_dwt(img, niveles=1):
+def aplicar_tdw(img, niveles=1):
     LL = np.float32(img)
     coeficientes = []
     for _ in range(niveles):
@@ -36,7 +36,7 @@ def aplicar_dwt(img, niveles=1):
         coeficientes.append((LH, HL, HH))
     return LL, coeficientes
 
-def reconstruir_idwt(LL, coeficientes):
+def reconstruir_itdw(LL, coeficientes):
     for (LH, HL, HH) in reversed(coeficientes):
         LL = pywt.idwt2((LL, (LH, HL, HH)), 'haar')
     return LL
@@ -79,53 +79,53 @@ guardar_histograma(imagen,
                    "tabla_hist_original.csv", 
                    output_dir)
 
-# === DCT: Varios niveles de compresión ===
-dct_full = cv2.dct(np.float32(imagen))
+# === TDC: Varios niveles de compresión ===
+tdc_full = cv2.dct(np.float32(imagen))
 percentajes = [50, 12.5]  # Solo los que necesitas
-dct_imgs = {}
+tdc_imgs = {}
 
 for p in percentajes:
-    dct_compressed = compress_dct(dct_full, p)
-    rec = np.uint8(np.clip(cv2.idct(dct_compressed), 0, 255))
-    dct_imgs[p] = rec
+    tdc_compressed = compress_tdc(tdc_full, p)
+    rec = np.uint8(np.clip(cv2.idct(tdc_compressed), 0, 255))
+    tdc_imgs[p] = rec
 
-# Guardar histogramas DCT
-guardar_histograma(dct_imgs[50], 
-                   "Compresión al 50% - DCT", 
-                   "hist_dct_50.png", 
-                   "tabla_hist_dct_50.xlsx", 
-                   "tabla_hist_dct_50.csv", 
+# Guardar histogramas TDC
+guardar_histograma(tdc_imgs[50], 
+                   "Compresión al 50% - TDC", 
+                   "hist_tdc_50.png", 
+                   "tabla_hist_tdc_50.xlsx", 
+                   "tabla_hist_tdc_50.csv", 
                    output_dir)
 
-guardar_histograma(dct_imgs[12.5], 
-                   "Compresión al 12.5% - DCT", 
-                   "hist_dct_12_5.png", 
-                   "tabla_hist_dct_12_5.xlsx", 
-                   "tabla_hist_dct_12_5.csv", 
+guardar_histograma(tdc_imgs[12.5], 
+                   "Compresión al 12,5% - TDC", 
+                   "hist_tdc_12,5.png", 
+                   "tabla_hist_tdc_12,5.xlsx", 
+                   "tabla_hist_tdc_12,5.csv", 
                    output_dir)
 
-# === DWT ===
-rec_dwt_imgs = {}
+# === TDW ===
+rec_tdw_imgs = {}
 niveles = {1: 50, 3: 12.5}  # niveles con % de compresión aproximada
 
 for nivel, porcentaje in niveles.items():
-    LL, coef = aplicar_dwt(imagen, nivel)
-    rec_dwt = np.clip(reconstruir_idwt(LL, coef), 0, 255).astype(np.uint8)
-    rec_dwt_imgs[porcentaje] = rec_dwt
+    LL, coef = aplicar_tdw(imagen, nivel)
+    rec_tdw = np.clip(reconstruir_itdw(LL, coef), 0, 255).astype(np.uint8)
+    rec_tdw_imgs[porcentaje] = rec_tdw
 
-# Guardar histogramas DWT
-guardar_histograma(rec_dwt_imgs[50], 
-                   "Compresión al 50% - DWT", 
-                   "hist_dwt_50.png", 
-                   "tabla_hist_dwt_50.xlsx", 
-                   "tabla_hist_dwt_50.csv", 
+# Guardar histogramas TDW
+guardar_histograma(rec_tdw_imgs[50], 
+                   "Compresión al 50% - TDW", 
+                   "hist_tdw_50.png", 
+                   "tabla_hist_tdw_50.xlsx", 
+                   "tabla_hist_tdw_50.csv", 
                    output_dir)
 
-guardar_histograma(rec_dwt_imgs[12.5], 
-                   "Compresión al 12.5% - DWT", 
-                   "hist_dwt_12_5.png", 
-                   "tabla_hist_dwt_12_5.xlsx", 
-                   "tabla_hist_dwt_12_5.csv", 
+guardar_histograma(rec_tdw_imgs[12.5], 
+                   "Compresión al 12,5% - TDW", 
+                   "hist_tdw_12,5.png", 
+                   "tabla_hist_tdw_12,5.xlsx", 
+                   "tabla_hist_tdw_12,5.csv", 
                    output_dir)
 
-print("Histogramas y tablas (Excel + CSV) generados para: Original, DCT (50%, 12.5%) y DWT (50%, 12.5%).")
+print("Histogramas y tablas (Excel + CSV) generados para: Original, TDC (50%, 12,5%) y TDW (50%, 12,5%).")
