@@ -12,6 +12,13 @@ def calcular_mse_psnr_ssim(original, reconstruida):
     ssim_val = ssim(original, reconstruida, data_range=255)
     return mse_val, psnr_val, ssim_val
 
+# === FORMATEO DECIMAL CON COMA ===
+def fmt_coma(valor, decimales=2):
+    return f"{valor:.{decimales}f}".replace(".", ",")
+
+def fmt_coma_ssim(valor):
+    return f"{valor:.4f}".replace(".", ",")
+
 # === DCT ===
 def compress_dct(dct_matrix, percentage):
     height, width = dct_matrix.shape
@@ -95,16 +102,16 @@ mse_dwt_3 = mse_dwt_vals[2]
 psnr_dwt_3 = psnr_dwt_vals[2]
 ssim_dwt_3 = ssim_dwt_vals[2]
 
-# === PRIMERA HOJA ===
+# === PRIMERA HOJA (DCT) ===
 fig1, axes1 = plt.subplots(1, 3, figsize=(15, 6))
 
 for ax, img, title, mse_val, psnr_val, ssim_val in zip(
     axes1,
     [imagen, image_dct_50, image_dct_12_5],
-    ["Original", "Compresión al 50% - DCT", "Compresión al 12.5% - DCT"],
-    ["-", f"{mse_dct_50:.2f}", f"{mse_dct_12_5:.2f}"],
-    ["-", f"{psnr_dct_50:.2f} dB", f"{psnr_dct_12_5:.2f} dB"],
-    ["-", f"{ssim_dct_50:.4f}", f"{ssim_dct_12_5:.4f}"]):
+    ["Original", "Compresión al 50% - DCT", "Compresión al 12,5% - DCT"],
+    ["-", fmt_coma(mse_dct_50), fmt_coma(mse_dct_12_5)],
+    ["-", f"{fmt_coma(psnr_dct_50)} dB", f"{fmt_coma(psnr_dct_12_5)} dB"],
+    ["-", fmt_coma_ssim(ssim_dct_50), fmt_coma_ssim(ssim_dct_12_5)]):
 
     ax.imshow(img, cmap='gray')
     ax.set_title(f"{title}\nMSE: {mse_val} | PSNR: {psnr_val} | SSIM: {ssim_val}")
@@ -113,16 +120,16 @@ for ax, img, title, mse_val, psnr_val, ssim_val in zip(
 plt.tight_layout()
 plt.show()
 
-# === TERCERA HOJA ===
+# === TERCERA HOJA (DWT) ===
 fig3, axes3 = plt.subplots(1, 3, figsize=(15, 6))
 
 for ax, img, title, mse_val, psnr_val, ssim_val in zip(
     axes3,
     [imagen, rec_dwt_1, rec_dwt_3],
-    ["Original", "Compresión al 50% (j=1) - DWT de Haar", "Compresión al 12.5% (j=3) - DWT de Haar"],
-    ["-", f"{mse_dwt_1:.2f}", f"{mse_dwt_3:.2f}"],
-    ["-", f"{psnr_dwt_1:.2f} dB", f"{psnr_dwt_3:.2f} dB"],
-    ["-", f"{ssim_dwt_1:.4f}", f"{ssim_dwt_3:.4f}"]):
+    ["Original", "Compresión al 50% (j=1) - DWT de Haar", "Compresión al 12,5% (j=3) - DWT de Haar"],
+    ["-", fmt_coma(mse_dwt_1), fmt_coma(mse_dwt_3)],
+    ["-", f"{fmt_coma(psnr_dwt_1)} dB", f"{fmt_coma(psnr_dwt_3)} dB"],
+    ["-", fmt_coma_ssim(ssim_dwt_1), fmt_coma_ssim(ssim_dwt_3)]):
 
     ax.imshow(img, cmap='gray')
     ax.set_title(f"{title}\nMSE: {mse_val} | PSNR: {psnr_val} | SSIM: {ssim_val}")
@@ -131,13 +138,19 @@ for ax, img, title, mse_val, psnr_val, ssim_val in zip(
 plt.tight_layout()
 plt.show()
 
-# === QUINTA HOJA ===
-def annotate(ax, x, y, fmt="{:.2f}"):
-    for i, (xi, yi) in enumerate(zip(x, y)):
-        ax.annotate(fmt.format(yi), (xi, yi), textcoords="offset points", xytext=(0, 5), ha='center', fontsize=8)
+# === QUINTA HOJA (GRÁFICAS COMPARATIVAS) ===
+def annotate(ax, x, y, decimales=2):
+    for xi, yi in zip(x, y):
+        ax.annotate(fmt_coma(yi, decimales), (xi, yi),
+                    textcoords="offset points", xytext=(0, 5), ha='center', fontsize=8)
+
+def annotate_ssim(ax, x, y):
+    for xi, yi in zip(x, y):
+        ax.annotate(fmt_coma_ssim(yi), (xi, yi),
+                    textcoords="offset points", xytext=(0, 5), ha='center', fontsize=8)
 
 fig5, axs5 = plt.subplots(1, 3, figsize=(18, 5))
-labels = ["50%", "25%", "12.5%", "6.25%"]
+labels = ["50%", "25%", "12,5%", "6,25%"]
 x = [50, 25, 12.5, 6.25]
 
 # MSE
@@ -169,16 +182,15 @@ axs5[2].set_title('Compresión vs SSIM')
 axs5[2].set_xlabel('Nivel de compresión (%)')
 axs5[2].set_ylabel('SSIM')
 axs5[2].invert_xaxis()
-annotate(axs5[2], x, ssim_dct_vals, fmt="{:.4f}")
-annotate(axs5[2], x, ssim_dwt_vals, fmt="{:.4f}")
+annotate_ssim(axs5[2], x, ssim_dct_vals)
+annotate_ssim(axs5[2], x, ssim_dwt_vals)
 axs5[2].legend()
 
 plt.tight_layout()
 plt.show()
 
 # === GUARDAR IMÁGENES DCT EN JPG ===
-output_dir = "."  # Carpeta actual (la del script)
-
+output_dir = "."  # Carpeta actual
 cv2.imwrite(os.path.join(output_dir, "dct_50.jpg"), image_dct_50)
 cv2.imwrite(os.path.join(output_dir, "dct_25.jpg"), dct_imgs[1])
 cv2.imwrite(os.path.join(output_dir, "dct_12_5.jpg"), image_dct_12_5)
